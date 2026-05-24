@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solidity Tutor — Belajar Smart Contract dari 0</title>
+<meta name="description" content="Chat-based Solidity learning + exercise generator. Powered by Xiaomi MiMo.">
+<style>
+:root {
+  --bg: #0a0e14;
+  --surface: #111720;
+  --surface-2: #1a2230;
+  --border: #2a3548;
+  --text: #f5f5f7;
+  --text-dim: #94a3b8;
+  --accent: #06b6d4;
+  --accent-2: #0ea5e9;
+  --success: #22c55e;
+  --warning: #facc15;
+  --danger: #ef4444;
+  --code-bg: #0d1620;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 0% 0%, rgba(6,182,212,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 100% 100%, rgba(14,165,233,0.08) 0%, transparent 50%);
+}
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,14,20,0.8);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+}
+.btn {
+  padding: 0.6rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  cursor: pointer; font-weight: 500;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--accent); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none; color: #052e16; font-weight: 700;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(6,182,212,0.3); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; height: calc(100vh - 130px); display: flex; flex-direction: column; }
+.tabs {
+  display: flex; gap: 0.5rem; margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+.tab {
+  padding: 0.6rem 1.2rem; border-radius: 8px 8px 0 0;
+  background: transparent; border: none; color: var(--text-dim);
+  cursor: pointer; font-weight: 500; white-space: nowrap;
+}
+.tab.active { background: var(--surface); color: var(--accent); border-bottom: 2px solid var(--accent); }
+.tab-content { flex: 1; display: none; flex-direction: column; min-height: 0; }
+.tab-content.active { display: flex; }
+
+/* Chat tab */
+.chat-area {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; }
+.msg { margin-bottom: 1rem; max-width: 85%; }
+.msg.user { margin-left: auto; }
+.msg-bubble {
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+.msg.user .msg-bubble { background: var(--accent); color: #052e16; }
+.msg.assistant .msg-bubble { background: var(--surface-2); border: 1px solid var(--border); }
+.msg-bubble pre { background: var(--code-bg); padding: 0.8rem; border-radius: 6px; margin: 0.5rem 0; overflow-x: auto; font-size: 0.85rem; }
+.msg-bubble code { background: var(--code-bg); padding: 0.1rem 0.4rem; border-radius: 4px; font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 0.85rem; }
+.msg-bubble pre code { background: transparent; padding: 0; }
+.chat-input-row { display: flex; gap: 0.5rem; padding: 1rem; border-top: 1px solid var(--border); background: var(--surface-2); }
+.chat-input {
+  flex: 1; padding: 0.7rem 1rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-size: 0.95rem;
+}
+.chat-input:focus { outline: none; border-color: var(--accent); }
+
+/* Lessons tab */
+.lessons-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.lesson-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lesson-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.lesson-emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+.lesson-title { font-weight: 700; margin-bottom: 0.3rem; }
+.lesson-desc { color: var(--text-dim); font-size: 0.9rem; }
+.lesson-level { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; margin-top: 0.5rem; }
+.level-beginner { background: rgba(34,197,94,0.15); color: var(--success); }
+.level-intermediate { background: rgba(250,204,21,0.15); color: var(--warning); }
+.level-advanced { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+/* Exercise tab */
+.exercise-config { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+.options-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; }
+.field label { display: block; margin-bottom: 0.3rem; color: var(--text-dim); font-size: 0.85rem; }
+.field select, .field input { width: 100%; padding: 0.6rem 0.8rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+.exercise-result { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+.exercise-result h3 { color: var(--accent); margin: 0.8rem 0 0.5rem; }
+.exercise-result pre { background: var(--code-bg); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; }
+.exercise-result code { font-family: 'SF Mono', Monaco, Consolas, monospace; }
+
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal.open { display: flex; }
+.modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; width: min(500px, 90vw); }
+.modal-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+.field { margin-bottom: 1rem; }
+.empty { text-align: center; color: var(--text-dim); padding: 3rem 1rem; }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+footer { text-align: center; padding: 1rem; color: var(--text-dim); font-size: 0.85rem; }
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--surface-2); border: 1px solid var(--border); padding: 0.8rem 1.5rem; border-radius: 8px; z-index: 200; display: none; }
+.toast.show { display: block; animation: slideUp 0.3s; }
+@keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">📚</div>
+    <span>Solidity Tutor</span>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <button class="btn" onclick="openSettings()">⚙ Settings</button>
+    <a class="btn" href="https://github.com/Fikrizz" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('chat')">💬 Tanya AI</button>
+    <button class="tab" onclick="switchTab('lessons')">📖 Materi</button>
+    <button class="tab" onclick="switchTab('exercise')">🎯 Latihan</button>
+  </div>
+
+  <div class="tab-content active" id="tab-chat">
+    <div class="chat-area">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg assistant">
+          <div class="msg-bubble">Halo 👋 Aku tutor Solidity. Tanyain apa aja — dari "apa itu mapping?" sampai "kenapa contract gua kena reentrancy?". Aku jawab pakai bahasa santai + contoh kode.<br><br><strong>Coba:</strong>
+            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+              <li>Apa beda `memory` dan `storage`?</li>
+              <li>Cara bikin ERC20 token sederhana</li>
+              <li>Kenapa pakai `require` bukan `if-throw`?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Tanya apa aja tentang Solidity..." onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()">
+          <span id="sendBtnText">Send</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-lessons">
+    <div class="lessons-grid" id="lessonsGrid"></div>
+  </div>
+
+  <div class="tab-content" id="tab-exercise">
+    <div class="exercise-config">
+      <h3 style="margin-bottom: 1rem;">🎯 Generate Latihan</h3>
+      <div class="options-row">
+        <div class="field">
+          <label>Topik</label>
+          <select id="exTopic">
+            <option value="variables and types">Variables & Types</option>
+            <option value="functions and visibility">Functions & Visibility</option>
+            <option value="mappings and structs">Mappings & Structs</option>
+            <option value="modifiers">Modifiers</option>
+            <option value="events">Events</option>
+            <option value="inheritance">Inheritance</option>
+            <option value="ERC20 token">ERC20 Token</option>
+            <option value="ERC721 NFT">ERC721 NFT</option>
+            <option value="reentrancy security">Reentrancy & Security</option>
+            <option value="gas optimization">Gas Optimization</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Level</label>
+          <select id="exLevel">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate" selected>Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tipe</label>
+          <select id="exType">
+            <option value="fill-in-the-blank">Fill in the blank</option>
+            <option value="bug-fix" selected>Bug fix</option>
+            <option value="from-scratch">From scratch</option>
+            <option value="quiz">Quiz (multiple choice)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="genExBtn" onclick="generateExercise()" style="margin-top: 1rem;">
+        <span id="genExBtnText">🎯 Generate Latihan</span>
+      </button>
+    </div>
+    <div id="exerciseResult"></div>
+  </div>
+</main>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-title">
+      <h2>⚙ Settings</h2>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="field">
+      <label>MiMo API Key (optional)</label>
+      <input type="password" id="apiKey" placeholder="kosongin pakai demo gratis">
+      <small style="color: var(--text-dim); font-size: 0.8rem;">Get key: <a href="https://api.xiaomimimo.com" target="_blank" style="color: var(--accent);">api.xiaomimimo.com</a></small>
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="model">
+        <option value="mimo-v2.5-reasoning">MiMo V2.5 Reasoning (best)</option>
+        <option value="mimo-v2.5" selected>MiMo V2.5</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  Powered by <strong>Xiaomi MiMo</strong> · <a href="https://100t.xiaomimimo.com" target="_blank" style="color: var(--accent);">MiMo 100T</a> · <a href="https://github.com/Fikrizz" target="_blank" style="color: var(--accent);">@Fikrizz</a>
+</footer>
+
+<script>
+const STORAGE_KEY = 'solidity-tutor-settings';
+const ENDPOINTS = { mimo: 'https://api.xiaomimimo.com/v1/chat/completions', pollinations: 'https://text.pollinations.ai/openai' };
+const SYSTEM_PROMPT = `Kamu adalah tutor Solidity yang sabar dan pakai bahasa santai (mix Indonesia + English istilah teknis). Selalu kasih contoh kode yang bisa langsung dicoba di Remix. Format kode dalam markdown code block dengan label \`solidity. Untuk konsep yg related ke security, sebutkan vulnerability concrete (reentrancy, integer overflow, access control). Singkat tapi jelas.`;
+
+const LESSONS = [
+  { emoji: '🌱', title: 'Hello Solidity', desc: 'Setup pertama: Remix, pragma, contract structure', level: 'beginner', topic: 'introduction to solidity, setup, hello world contract' },
+  { emoji: '📦', title: 'Variables & Types', desc: 'uint, address, bool, string, bytes32 — kapan pakai apa', level: 'beginner', topic: 'solidity primitive types and when to use each' },
+  { emoji: '🗺️', title: 'Mappings & Structs', desc: 'Data structure paling sering dipakai di smart contract', level: 'beginner', topic: 'mappings and structs in solidity with practical examples' },
+  { emoji: '🔧', title: 'Functions & Visibility', desc: 'public, private, external, internal — mana yg paling murah?', level: 'beginner', topic: 'function visibility modifiers and gas implications' },
+  { emoji: '🛡️', title: 'Modifiers', desc: 'Pattern untuk access control dan validation', level: 'intermediate', topic: 'function modifiers for access control patterns' },
+  { emoji: '📡', title: 'Events & Logs', desc: 'Communicate sama frontend via blockchain events', level: 'intermediate', topic: 'events emit pattern and how frontends listen' },
+  { emoji: '🪙', title: 'ERC20 Token', desc: 'Bikin token sendiri yang compatible dengan wallet', level: 'intermediate', topic: 'building ERC20 token from scratch with OpenZeppelin' },
+  { emoji: '🎨', title: 'ERC721 NFT', desc: 'NFT contract pattern dan metadata', level: 'intermediate', topic: 'ERC721 NFT contract with tokenURI metadata' },
+  { emoji: '⚠️', title: 'Reentrancy', desc: 'Vulnerability paling klasik & cara mitigasi', level: 'advanced', topic: 'reentrancy attack with The DAO example and ReentrancyGuard' },
+  { emoji: '⛽', title: 'Gas Optimization', desc: 'Tricks untuk hemat gas di production contract', level: 'advanced', topic: 'gas optimization techniques: storage packing, calldata, custom errors' },
+  { emoji: '🔐', title: 'Access Control', desc: 'Ownable, AccessControl, multisig patterns', level: 'advanced', topic: 'access control patterns from Ownable to multisig' },
+  { emoji: '⚡', title: 'Upgradeable Contracts', desc: 'Proxy pattern (UUPS, Transparent)', level: 'advanced', topic: 'upgradeable proxy patterns UUPS and Transparent' }
+];
+
+function loadSettings() {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  document.getElementById('apiKey').value = saved.apiKey || '';
+  document.getElementById('model').value = saved.model || 'mimo-v2.5';
+}
+function saveSettings() {
+  const settings = { apiKey: document.getElementById('apiKey').value.trim(), model: document.getElementById('model').value };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  toast('✓ Saved');
+  closeSettings();
+}
+function getSettings() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${code.trim()}</code></pre>`);
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/^- (.+)$/gm, '• $1');
+  html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  return html;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function renderLessons() {
+  document.getElementById('lessonsGrid').innerHTML = LESSONS.map(l => `
+    <div class="lesson-card" onclick='startLesson(${JSON.stringify(l).replace(/'/g, "&#39;")})'>
+      <div class="lesson-emoji">${l.emoji}</div>
+      <div class="lesson-title">${l.title}</div>
+      <div class="lesson-desc">${l.desc}</div>
+      <span class="lesson-level level-${l.level}">${l.level}</span>
+    </div>
+  `).join('');
+}
+function startLesson(lesson) {
+  switchTab('chat');
+  document.getElementById('chatInput').value = `Ajarin aku tentang: ${lesson.topic}. Mulai dari konsep dasar, kasih contoh kode lengkap, dan jelasin apa yang penting.`;
+  sendMessage();
+}
+
+const chatHistory = [{ role: 'system', content: SYSTEM_PROMPT }];
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  
+  appendMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+  
+  const btn = document.getElementById('sendBtn');
+  const btnText = document.getElementById('sendBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span>';
+  
+  const placeholderId = appendMsg('assistant', '<span class="spinner"></span> Mikir...');
+  
+  try {
+    const result = await callAI(chatHistory);
+    document.getElementById(placeholderId).querySelector('.msg-bubble').innerHTML = renderMarkdown(result.text);
+    chatHistory.push({ role: 'assistant', content: result.text });
+  } catch (e) {
+    document.getElementById(placeholderId).querySelector('.msg-bubble').innerHTML = `⚠️ ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Send';
+  }
+}
+
+function appendMsg(role, html) {
+  const id = 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  const wrap = document.getElementById('chatMessages');
+  wrap.insertAdjacentHTML('beforeend', `<div class="msg ${role}" id="${id}"><div class="msg-bubble">${html}</div></div>`);
+  wrap.scrollTop = wrap.scrollHeight;
+  return id;
+}
+
+async function callAI(messages) {
+  const settings = getSettings();
+  if (settings.apiKey) {
+    try {
+      const res = await fetch(ENDPOINTS.mimo, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.apiKey}` },
+        body: JSON.stringify({ model: settings.model || 'mimo-v2.5', messages, temperature: 0.7, max_tokens: 1500 })
+      });
+      if (res.ok) { const data = await res.json(); return { text: data.choices[0].message.content, source: 'MiMo' }; }
+    } catch (e) { console.warn('MiMo failed:', e); }
+  }
+  try {
+    const res = await fetch(ENDPOINTS.pollinations, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'openai', messages, temperature: 0.7 })
+    });
+    if (res.ok) { const data = await res.json(); return { text: data.choices[0].message.content, source: 'Pollinations' }; }
+  } catch (e) { console.warn('Pollinations failed:', e); }
+  throw new Error('AI service unavailable.');
+}
+
+async function generateExercise() {
+  const topic = document.getElementById('exTopic').value;
+  const level = document.getElementById('exLevel').value;
+  const type = document.getElementById('exType').value;
+  const btn = document.getElementById('genExBtn');
+  const btnText = document.getElementById('genExBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Generating...';
+  document.getElementById('exerciseResult').innerHTML = '<div class="empty"><div class="spinner" style="width:32px;height:32px;border-width:3px;"></div><p style="margin-top:1rem;">Membuat latihan...</p></div>';
+  
+  const prompt = `Buat 1 latihan Solidity dengan parameter:
+- Topik: ${topic}
+- Level: ${level}
+- Tipe: ${type}
+
+Format output (markdown):
+
+## Latihan: [judul]
+
+**Brief:** [1-2 kalimat brief]
+
+### Code/Question
+\`\`\`solidity
+[code untuk fill-in-blank/bug-fix, atau spec untuk from-scratch]
+\`\`\`
+
+### Hint
+[1-2 hint biar gak stuck]
+
+### Solution
+\`\`\`solidity
+[full solution code yang clean & commented]
+\`\`\`
+
+### Penjelasan
+[kenapa solution ini correct, common mistake, real-world relevance]
+
+Gunakan bahasa Indonesia santai. Pastikan code compile di Solidity 0.8.x.`;
+  
+  try {
+    const result = await callAI([{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: prompt }]);
+    document.getElementById('exerciseResult').innerHTML = `<div class="exercise-result">${renderMarkdown(result.text)}<p style="margin-top:1rem;color:var(--text-dim);font-size:0.85rem;">via ${result.source}</p></div>`;
+  } catch (e) {
+    document.getElementById('exerciseResult').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${escapeHtml(e.message)}</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.innerHTML = '🎯 Generate Lagi';
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+
+renderLessons();
+loadSettings();
+</script>
+</body>
+</html>
